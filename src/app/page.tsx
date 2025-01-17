@@ -53,6 +53,15 @@ const prefectureCodeMap: Record<string, number> = {
   徳島県: 36,
   香川県: 37,
   愛媛県: 38,
+  高知県: 39,
+  福岡県: 40,
+  佐賀県: 41,
+  長崎県: 42,
+  熊本県: 43,
+  大分県: 44,
+  宮崎県: 45,
+  鹿児島県: 46,
+  沖縄県: 47,
 };
 
 interface Prefecture {
@@ -63,6 +72,7 @@ interface Prefecture {
 interface PopulationData {
   year: number;
   population: number;
+  prefecture: string;
 }
 
 interface PopulationApiResponse {
@@ -80,7 +90,7 @@ const prefectures: Prefecture[] = Object.keys(prefectureCodeMap).map((key) => ({
 }));
 
 export default function Page() {
-  const [selectedPrefecture, setSelectedPrefecture] = useState<string | null>(null);
+  const [selectedPrefectures, setSelectedPrefectures] = useState<string[]>([]);
   const [chartData, setChartData] = useState<PopulationData[]>([]);
   const [selectedPopulationType, setSelectedPopulationType] = useState<string>("総人口");
 
@@ -93,12 +103,13 @@ export default function Page() {
 
   const handleCheckboxChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const { value, checked } = event.target;
+
     if (checked) {
-      setSelectedPrefecture(value);
+      setSelectedPrefectures((prev) => [...prev, value]);
       await fetchPopulationData(value, selectedPopulationType);
     } else {
-      setSelectedPrefecture(null);
-      setChartData([]);
+      setSelectedPrefectures((prev) => prev.filter((pref) => pref !== value));
+      setChartData((prev) => prev.filter((data) => data.prefecture !== value));
     }
   };
 
@@ -108,9 +119,10 @@ export default function Page() {
     const type = selectedOption?.value ?? "";
     setSelectedPopulationType(type);
 
-    if (selectedPrefecture) {
-      await fetchPopulationData(selectedPrefecture, type);
-    }
+    const promises = selectedPrefectures.map((prefecture) =>
+      fetchPopulationData(prefecture, type)
+    );
+    await Promise.all(promises);
   };
 
   const fetchPopulationData = async (prefectureName: string, populationType: string) => {
@@ -132,8 +144,9 @@ export default function Page() {
         const formattedData = populationData.data.map((entry) => ({
           year: entry.year,
           population: entry.value,
+          prefecture: prefectureName,
         }));
-        setChartData(formattedData);
+        setChartData((prev) => [...prev, ...formattedData]);
       }
     } catch (error) {
       console.error("人口構成データの取得に失敗しました:", error);
@@ -165,7 +178,7 @@ export default function Page() {
               id={`prefecture-${prefecture.id}`}
               value={prefecture.name}
               onChange={handleCheckboxChange}
-              checked={selectedPrefecture === prefecture.name}
+              checked={selectedPrefectures.includes(prefecture.name)}
               className="mr-2"
             />
             <label htmlFor={`prefecture-${prefecture.id}`}>{prefecture.name}</label>
@@ -174,22 +187,40 @@ export default function Page() {
       </div>
 
       {chartData.length > 0 && (
-        <ResponsiveContainer width="100%" height={400}>
-          <LineChart data={chartData}>
-            <CartesianGrid strokeDasharray="3 3" />
-            <XAxis dataKey="year" />
-            <YAxis />
-            <Tooltip />
-            <Legend />
-            <Line
-              type="monotone"
-              dataKey="population"
-              stroke="#8884d8"
-              activeDot={{ r: 8 }}
-            />
-          </LineChart>
-        </ResponsiveContainer>
-      )}
+  <ResponsiveContainer width="100%" height={400}>
+    <LineChart
+      data={Object.values(
+        chartData.reduce(
+          (acc, { year, population, prefecture }) => {
+            if (!acc[year]) {
+              acc[year] = { year };
+            }
+            acc[year][prefecture] = population;
+            return acc;
+          },
+          {} as Record<number, { year: number } & Record<string, number>>
+        )
+      )
+      }
+    >
+      <CartesianGrid strokeDasharray="3 3" />
+      <XAxis dataKey="year" />
+      <YAxis />
+      <Tooltip />
+      <Legend />
+      {selectedPrefectures.map((prefecture) => (
+        <Line
+          key={prefecture}
+          type="monotone"
+          dataKey={prefecture}
+          name={prefecture}
+          stroke={`#${Math.floor(Math.random() * 16777215).toString(16)}`}
+          activeDot={{ r: 8 }}
+        />
+      ))}
+    </LineChart>
+  </ResponsiveContainer>
+)}
     </div>
   );
 }
