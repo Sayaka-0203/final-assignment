@@ -1,64 +1,34 @@
 import axios from "axios";
+import dotenv from "dotenv";
 
-const prefectureCodeMap: Record<string, number> = {
-  北海道: 1,
-  青森県: 2,
-  岩手県: 3,
-  宮城県: 4,
-  秋田県: 5,
-  山形県: 6,
-  福島県: 7,
-  茨城県: 8,
-  栃木県: 9,
-  群馬県: 10,
-  埼玉県: 11,
-  千葉県: 12,
-  東京都: 13,
-  神奈川県: 14,
-  新潟県: 15,
-  富山県: 16,
-  石川県: 17,
-  福井県: 18,
-  山梨県: 19,
-  長野県: 20,
-  岐阜県: 21,
-  静岡県: 22,
-  愛知県: 23,
-  三重県: 24,
-  滋賀県: 25,
-  京都府: 26,
-  大阪府: 27,
-  兵庫県: 28,
-  奈良県: 29,
-  和歌山県: 30,
-  鳥取県: 31,
-  島根県: 32,
-  岡山県: 33,
-  広島県: 34,
-  山口県: 35,
-  徳島県: 36,
-  香川県: 37,
-  愛媛県: 38,
-  高知県: 39,
-  福岡県: 40,
-  佐賀県: 41,
-  長崎県: 42,
-  熊本県: 43,
-  大分県: 44,
-  宮崎県: 45,
-  鹿児島県: 46,
-  沖縄県: 47,
+// 環境変数のロード
+dotenv.config();
+
+// APIのベースURLとキーの定義
+const API_BASE_URL = "https://yumemi-frontend-engineer-codecheck-api.vercel.app";
+const API_KEY = process.env.NEXT_PUBLIC_API_KEY;
+
+// 都道府県データを取得する関数
+export const fetchPrefectures = async () => {
+  try {
+    const res = await axios.get(`${API_BASE_URL}/api/v1/prefectures`, {
+      headers: {
+        "X-API-KEY": process.env.NEXT_PUBLIC_API_KEY,
+      },
+    });
+    return res.data.result;
+  } catch (error) {
+    console.error("都道府県データの取得に失敗しました:", error);
+    throw new Error("都道府県データの取得に失敗しました。");
+  }
 };
 
-const API_BASE_URL = "https://yumemi-frontend-engineer-codecheck-api.vercel.app";
-
-export const fetchPopulationData = async (prefecture: string, populationType: string) => {
+// 人口構成データを取得する関数
+export const fetchPopulationData = async (
+  prefectureCode: number,
+  populationType: string
+) => {
   try {
-    const prefectureCode = prefectureCodeMap[prefecture];
-    if (!prefectureCode) {
-      throw new Error("無効な都道府県名です");
-    }
-
     const res = await axios.get(
       `${API_BASE_URL}/api/v1/population/composition/perYear`,
       {
@@ -67,7 +37,7 @@ export const fetchPopulationData = async (prefecture: string, populationType: st
           populationType: populationType,
         },
         headers: {
-          "X-API-KEY": "8FzX5qLmN3wRtKjH7vCyP9bGdEaU4sYpT6cMfZnJ",
+          "X-API-KEY": API_KEY,
         },
       }
     );
@@ -78,3 +48,13 @@ export const fetchPopulationData = async (prefecture: string, populationType: st
     throw new Error("人口構成データの取得に失敗しました。");
   }
 };
+
+// APIのレスポンス型定義
+export interface PopulationApiResponse {
+  result: {
+    data: {
+      label: string;
+      data: { year: number; value: number }[];
+    }[];
+  };
+}
