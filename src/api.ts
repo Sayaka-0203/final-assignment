@@ -1,14 +1,11 @@
 import axios from "axios";
 import dotenv from "dotenv";
 
-// 環境変数のロード
 dotenv.config();
 
-// APIのベースURLとキーの定義
 const API_BASE_URL = "https://yumemi-frontend-engineer-codecheck-api.vercel.app";
 const API_KEY = process.env.NEXT_PUBLIC_API_KEY;
 
-// 都道府県データを取得する関数
 export const fetchPrefectures = async () => {
   try {
     const res = await axios.get(`${API_BASE_URL}/api/v1/prefectures`, {
@@ -23,7 +20,6 @@ export const fetchPrefectures = async () => {
   }
 };
 
-// 人口構成データを取得する関数
 export const fetchPopulationData = async (
   prefectureCode: number,
   populationType: string
@@ -49,7 +45,6 @@ export const fetchPopulationData = async (
   }
 };
 
-// APIのレスポンス型定義
 export interface PopulationApiResponse {
   result: {
     data: {
