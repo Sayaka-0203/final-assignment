@@ -2,7 +2,8 @@
 
 import React, { useState, useEffect } from "react";
 import Select, { SingleValue } from "react-select";
-import { fetchPrefectures, fetchPopulationData, PopulationApiResponse } from "../api";
+import { fetchPrefectures, fetchPopulationData,} from "./api/population/route";
+import {PopulationApiResponse}from "../api";
 import PrefectureSelector from "../app/components/PrefectureSelector";
 import PopulationChart from "../app/components/PopulationChart";
 
